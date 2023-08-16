@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html style="background-color: rgb(229, 229, 229);">
+
+<head>
+
+</head>
+
+<body>
+    <header>
+        <div style="display: flex;flex-basis: auto ; flex-direction: row ; align-items: center ; ">
+            <img style="padding-right: 8pt;" src="logo.png">
+            <h2 style="color: darkblue; padding: auto;">GH Raisoni CCST Alarm Timings<h2>
+        </div>
+        <div>
+            <h5> Current Time <span id="time"></span>
+            </h5>
+            <button onclick="setTime()">Reset rtc</button>
+
+        </div>
+        <h5 style="color: red; font-weight: 800;">Warning : Clicking on submit will OVERWRITE existing
+            settings
+        </h5>
+    </header>
+
+    <div style="display: flex; flex-basis: auto; flex-direction: row;  width: 304pt;">
+
+        <div style="flex: 1;">
+            <form action="" id="timingData">
+                First lecture<br>
+                <input type="text" name="0" value="10:0">
+                <br>
+                Second lecture<br>
+                <input type="text" name="1" value="11:0">
+                <br>
+                Third lecture<br>
+                <input type="text" name="2" value="12:0">
+                <br>
+                Break<br>
+                <input type="text" name="8" value="12:30">
+                <br>
+                Fourth lecture<br>
+                <input type="text" name="3" value="1:30">
+                <br>
+                Fifth lecture<br>
+                <input type="text" name="4" value="2:30">
+                <br>
+                Sixth lecture<br>
+                <input type="text" name="5" value="3:30">
+                <br>
+                Seventh lecture<br>
+                <input type="text" name="6" value="4:30">
+                <br>
+                Eight lecture<br>
+                <input type="text" name="7" value="5:30">
+                <br>
+
+                <br>
+                <input type="submit" value="Submit" id="btnSubmit">
+            </form>
+        </div>
+        <div style="flex: 1;">
+            <h3>Exam Mode Timings</h3>
+            <h4>Set exam timings here,<br>enter start = '0' to disable</h4>
+            <form id="examTime">
+                Start alarm<br>
+                <input type="text" name="sTime" value="10:30">
+                <br>
+                End Alarm<br>
+                <input type="text" name="eTime" value="01:30">
+                <br>
+                <br>
+                <input type="submit" value="Submit" id="exmBtnSubmit">
+            </form>
+        </div>
+
+
+    </div>
+
+    <script type="text/javascript" async>
+        const form = document.querySelector('#timingData');
+        if (form) {
+            form.addEventListener("submit", function (e) {
+                console.log(this);
+                submitForm(e, this);
+            });
+        }
+
+
+        async function submitForm(e, form) {
+            e.preventDefault();
+
+            const btnSubmit = document.getElementById('btnSubmit');
+            btnSubmit.disabled = true;
+            setTimeout(() => btnSubmit.disabled = false, 2000);
+
+            const jsonFormData = buildJsonFormData(form);
+            const headers = { "Content-Type": "application/json" };
+
+            const response = performPostHttpRequest('/timings', headers, jsonFormData);
+            console.log(response);
+
+            if (response)
+                alert('Changes Saved');
+            else
+                alert('an error occured');
+        }
+
+
+        const examTimeForm = document.querySelector('#examTime');
+        if (examTimeForm) {
+            examTimeForm.addEventListener("submit", function (e) {
+                console.log(this);
+                submitExmTimeForm(e, this);
+            });
+        }
+        async function setTime() {
+            const time = Math.round((Date.now() / 1000) + 19800);
+            const headers = { "Content-Type": "application/json" };
+            console.log(time);
+            const res = await performPostHttpRequest("/setTime", headers, { "time": `${time}` });
+            if (res) {
+                alert('Time Updated')
+            }
+            else {
+                alert('an error occured')
+            }
+        }
+        async function submitExmTimeForm(e, form) {
+            e.preventDefault();
+
+            const btnSubmit = document.getElementById('exmBtnSubmit');
+            exmBtnSubmit.disabled = true;
+            setTimeout(() => exmBtnSubmit.disabled = false, 2000);
+
+            const jsonFormData = buildJsonFormData(form);
+            const headers = { "Content-Type": "application/json" };
+
+            const response = performPostHttpRequest('/examTimings', headers, jsonFormData);
+            console.log(response);
+
+            if (response)
+                alert('Changes Saved');
+            else
+                alert('an error occured');
+        }
+
+
+        function buildJsonFormData(form) {
+            const jsonFormData = {};
+            for (const pair of new FormData(form)) {
+                jsonFormData[pair[0]] = pair[1];
+            }
+            console.log(jsonFormData);
+            return jsonFormData;
+        }
+
+        (async () => {
+            let response = await fetch("/time", { method: "GET" });
+
+            const text = await response.text();
+
+            document.getElementById("time").innerHTML = text;
+
+            console.log(text);
+
+        })()
+
+
+        async function performPostHttpRequest(fetchLink, headers, body) {
+            if (!fetchLink || !headers || !body) {
+                throw new Error("one or more parameters were not passed")
+            }
+            try {
+                const rawResponse = await fetch(fetchLink, { method: "POST", headers: headers, body: JSON.stringify(body) });
+
+                console.log(rawResponse);
+                const content = await rawResponse.json();
+                return content;
+            }
+            catch (err) {
+                console.error(`Error at fetch POST: ${err}`);
+                alert(`Error at fetch POST: ${err}`);
+
+                throw err;
+            }
+        }</script>
+</body>
+
+</html>
